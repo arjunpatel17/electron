@@ -164,8 +164,25 @@ void TopLevelWindow::OnWindowClosed() {
   base::ThreadTaskRunnerHandle::Get()->PostTask(FROM_HERE, GetDestroyClosure());
 }
 
-void TopLevelWindow::OnWindowEndSession() {
-  Emit("session-end");
+bool TopLevelWindow::OnWindowQueryEndSession(bool isCritical,
+                                             std::string* shutdownBlockReason) {
+  bool askedToBlockShutdown = false;
+  askedToBlockShutdown = Emit("query-session-end", isCritical);
+#if defined(OS_WIN)
+  *shutdownBlockReason = windowsShutdownBlockReason;
+#endif
+  return askedToBlockShutdown;
+}
+
+void TopLevelWindow::OnWindowEndSession(bool isCritical,
+                                        bool terminationAfterMessageProcessed) {
+  Emit("session-end", isCritical, terminationAfterMessageProcessed);
+}
+
+void TopLevelWindow::SetWindowsShutdownBlockReason(const std::string& reason) {
+#if defined(OS_WIN)
+  windowsShutdownBlockReason = reason;
+#endif
 }
 
 void TopLevelWindow::OnWindowBlur() {
@@ -1197,6 +1214,8 @@ void TopLevelWindow::BuildPrototype(v8::Isolate* isolate,
       .SetMethod("setThumbnailClip", &TopLevelWindow::SetThumbnailClip)
       .SetMethod("setThumbnailToolTip", &TopLevelWindow::SetThumbnailToolTip)
       .SetMethod("setAppDetails", &TopLevelWindow::SetAppDetails)
+      .SetMethod("setWindowsShutdownBlockReason",
+                 &TopLevelWindow::SetWindowsShutdownBlockReason)
 #endif
       .SetProperty("id", &TopLevelWindow::GetID);
 }

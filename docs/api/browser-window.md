@@ -453,6 +453,10 @@ _**Note**: There is a subtle difference between the behaviors of `window.onbefor
 Emitted when the window is closed. After you have received this event you should
 remove the reference to the window and avoid using it any more.
 
+#### Event: 'query-session-end' _Windows_
+Emitted when the user chooses to end the session or when an application calls one
+of the system shutdown functions.
+
 #### Event: 'session-end' _Windows_
 
 Emitted when window session is going to end due to force shutdown or machine restart
@@ -850,6 +854,12 @@ for this window, but it guarantees the `closed` event will be emitted.
 Try to close the window. This has the same effect as a user manually clicking
 the close button of the window. The web page may cancel the close though. See
 the [close event](#event-close).
+
+#### `win.setWindowsShutdownBlockReason(reason)` _Windows_
+
+* `reason` String
+
+Reason for holding shutdown.
 
 #### `win.focus()`
 

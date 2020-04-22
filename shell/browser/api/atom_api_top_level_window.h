@@ -54,7 +54,10 @@ class TopLevelWindow : public mate::TrackableObject<TopLevelWindow>,
   // NativeWindowObserver:
   void WillCloseWindow(bool* prevent_default) override;
   void OnWindowClosed() override;
-  void OnWindowEndSession() override;
+  bool OnWindowQueryEndSession(bool isCritical,
+                               std::string* shutdownBlockReason) override;
+  void OnWindowEndSession(bool isCritical,
+                          bool terminationAfterMessageProcessed) override;
   void OnWindowBlur() override;
   void OnWindowFocus() override;
   void OnWindowShow() override;
@@ -91,6 +94,7 @@ class TopLevelWindow : public mate::TrackableObject<TopLevelWindow>,
 
   // Public APIs of NativeWindow.
   void SetContentView(mate::Handle<View> view);
+  void SetWindowsShutdownBlockReason(const std::string& reason);
   void Close();
   virtual void Focus();
   virtual void Blur();
@@ -245,6 +249,7 @@ class TopLevelWindow : public mate::TrackableObject<TopLevelWindow>,
 #if defined(OS_WIN)
   typedef std::map<UINT, MessageCallback> MessageCallbackMap;
   MessageCallbackMap messages_callback_map_;
+  std::string windowsShutdownBlockReason;
 #endif
 
   v8::Global<v8::Value> content_view_;

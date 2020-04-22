@@ -206,6 +206,7 @@ filenames = {
     "shell/browser/native_window_views.h",
     "shell/browser/native_window_mac.h",
     "shell/browser/native_window_mac.mm",
+    "shell/browser/native_window_observer.cc",
     "shell/browser/native_window_observer.h",
     "shell/browser/media/media_capture_devices_dispatcher.cc",
     "shell/browser/media/media_capture_devices_dispatcher.h",

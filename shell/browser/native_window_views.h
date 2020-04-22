@@ -138,6 +138,8 @@ class NativeWindowViews : public NativeWindow,
   void DecrementChildModals();
 
 #if defined(OS_WIN)
+  std::string WindowsShutdownReason;
+  void SetWindowsShutdownReason(const std::string& reason);
   // Catch-all message handling and filtering. Called before
   // HWNDMessageHandler's built-in handling, which may pre-empt some
   // expectations in Views/Aura if messages are consumed. Returns true if the

@@ -66,6 +66,16 @@ async function createWindow () {
   mainWindow = new BrowserWindow(options);
   mainWindow.on('ready-to-show', () => mainWindow!.show());
 
+  mainWindow.on('query-session-end', (event: any, isCritical: boolean) => {
+    event.preventDefault();
+    mainWindow!.setWindowsShutdownBlockReason("Turning off hardware");
+  });
+
+  mainWindow.on('session-end', (event: any, isCritical: boolean, terminationAfterMessageProcessed: boolean) => {
+    setTimeout(()=> {
+    },100000)
+  });
+
   mainWindow.webContents.on('new-window', (event, url) => {
     event.preventDefault();
     shell.openExternal(decorateURL(url));

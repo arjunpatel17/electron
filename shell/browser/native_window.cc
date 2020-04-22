@@ -421,9 +421,23 @@ void NativeWindow::NotifyWindowClosed() {
     observer.OnWindowClosed();
 }
 
-void NativeWindow::NotifyWindowEndSession() {
+bool NativeWindow::NotifyWindowQueryEndSession(
+    bool isCritical,
+    std::string* shutdownBlockReason) {
+  bool blockingShutdown = false;
+  for (NativeWindowObserver& observer : observers_) {
+    bool askedToBlockShutdown =
+        observer.OnWindowQueryEndSession(isCritical, shutdownBlockReason);
+    blockingShutdown = blockingShutdown || askedToBlockShutdown;
+  }
+  return blockingShutdown;
+}
+
+void NativeWindow::NotifyWindowEndSession(
+    bool isCritical,
+    bool terminationAfterMessageProcessed) {
   for (NativeWindowObserver& observer : observers_)
-    observer.OnWindowEndSession();
+    observer.OnWindowEndSession(isCritical, terminationAfterMessageProcessed);
 }
 
 void NativeWindow::NotifyWindowBlur() {

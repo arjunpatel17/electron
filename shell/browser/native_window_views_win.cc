@@ -19,6 +19,8 @@
 // Must be included after other Windows headers.
 #include <UIAutomationCoreApi.h>
 
+#include <thread>
+
 namespace electron {
 
 namespace {
@@ -174,6 +176,48 @@ bool NativeWindowViews::ExecuteWindowsCommand(int command_id) {
   return false;
 }
 
+BOOL CALLBACK IsHwndOwnedByCurrentProcess(_In_ HWND hwnd, _In_ LPARAM lParam) {
+  // If the current process owns the passed-in hwnd, this function treats the
+  // lParam as a pointer to a HWND and sets it to the passed-in hwnd.
+  // See EnumWindowsProc callback function
+  // https://docs.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ms633498(v=vs.85)
+
+  DWORD currentProcessId = GetCurrentProcessId();
+  DWORD currentThreadId = GetCurrentThreadId();
+  DWORD owningProcessId;
+  DWORD owningThreadId = GetWindowThreadProcessId(hwnd, &owningProcessId);
+  if (owningProcessId == currentProcessId &&
+      owningThreadId == currentThreadId) {
+    if (lParam != NULL) {
+      HWND* ptr_hwnd = (HWND*)lParam;
+      *ptr_hwnd = hwnd;
+    }
+    return false;
+  }
+  return true;
+}
+
+// Gets the HWND to the main window the current process owns.
+// Returns nullptr if it couldn't be found.
+HWND GetMainHwnd() {
+  HWND mainHwnd = nullptr;
+  HWND* ptr_mainHwnd = &mainHwnd;
+  LPARAM casted_ptr_mainHwnd = (LPARAM)(ptr_mainHwnd);
+  EnumWindows(IsHwndOwnedByCurrentProcess, casted_ptr_mainHwnd);
+  return mainHwnd;
+}
+
+std::wstring stringToWideString(const std::string& s) {
+  // from https://stackoverflow.com/a/27296/1433521
+  int len;
+  int slength = (int)s.length() + 1;
+  len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0);
+  std::vector<wchar_t> buf = std::vector<wchar_t>(len);
+  MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, buf.data(), len);
+  std::wstring r(buf.data());
+  return r;
+}
+
 bool NativeWindowViews::PreHandleMSG(UINT message,
                                      WPARAM w_param,
                                      LPARAM l_param,
@@ -282,10 +326,30 @@ bool NativeWindowViews::PreHandleMSG(UINT message,
       }
       return false;
     }
-    case WM_ENDSESSION: {
-      if (w_param) {
-        NotifyWindowEndSession();
+    case WM_QUERYENDSESSION: {
+      bool isCritical = l_param & ENDSESSION_CRITICAL;
+      bool blockShutdown = false;
+      std::string shutdownBlockReason;
+      blockShutdown =
+          NotifyWindowQueryEndSession(isCritical, &shutdownBlockReason);
+      if (blockShutdown) {
+        HWND mainHwnd = GetMainHwnd();
+        std::wstring wideStrReason =
+            stringToWideString(shutdownBlockReason).data();
+        LPCWSTR reason = wideStrReason.c_str();
+        ShutdownBlockReasonCreate(mainHwnd, reason);
+
+        // Tell Windows shutdown should not happen.
+        *result = false;
+        // Say the message was handled.
+        return true;
       }
+      return false;
+    }
+    case WM_ENDSESSION: {
+      bool isCritical = l_param & ENDSESSION_CRITICAL;
+      bool terminationAfterMessageProcessed = w_param;
+      NotifyWindowEndSession(isCritical, terminationAfterMessageProcessed);
       return false;
     }
     case WM_PARENTNOTIFY: {

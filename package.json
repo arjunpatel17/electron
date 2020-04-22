@@ -1,6 +1,6 @@
 {
   "name": "electron",
-  "version": "7.2.1",
+  "version": "7.2.1-keysight",
   "repository": "https://github.com/electron/electron",
   "description": "Build cross platform desktop apps with JavaScript, HTML, and CSS",
   "devDependencies": {
@@ -74,9 +74,12 @@
     "lint:check-trailing-whitespace": "python ./script/check-trailing-whitespace.py",
     "lint:js-in-markdown": "standard-markdown docs",
     "create-api-json": "electron-docs-parser --dir=./",
-    "create-typescript-definitions": "npm run create-api-json && electron-typescript-definitions --api=electron-api.json && node spec/ts-smoke/runner.js",
-    "gn-typescript-definitions": "npm run create-typescript-definitions && shx cp electron.d.ts",
+    "create-typescript-definitions": "npm run create-api-json && electron-typescript-definitions --api=electron-api.json --out-dir=./electron.d.ts && node spec/ts-smoke/runner.js",
+    "create-npm-package": "cd out && npm pack ./npm-package",
+    "create-hash": "cd ../out && cross-var \"python ../electron/script/create-hashfile.py $npm_package_version\"",
+    "gn-typescript-definitions": "npm run create-typescript-definitions",
     "pre-flight": "pre-flight",
+    "prepare-npm": "node ./script/prepare-npm.js",
     "preinstall": "node -e 'process.exit(0)'",
     "prepack": "check-for-leaks",
     "repl": "node ./script/start.js --interactive",
@@ -90,12 +93,6 @@
   "keywords": [
     "electron"
   ],
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged",
-      "pre-push": "check-for-leaks"
-    }
-  },
   "lint-staged": {
     "*.{js,ts}": [
       "node script/lint.js --js --fix --only --",

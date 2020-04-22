@@ -6,7 +6,7 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const extract = require('extract-zip')
-const { downloadArtifact } = require('@electron/get')
+const { download, downloadArtifact } = require('@electron/get')
 
 let installedVersion = null
 try {
@@ -27,15 +27,28 @@ if (installedVersion === version && fs.existsSync(electronPath)) {
   process.exit(0)
 }
 
+let mirrorOptions;
+if(version.indexOf('keysight') !== -1) {
+  // Will download from https://artifactory.it.keysight.com/artifactory/generic-local-ansible/boxer/electron/
+  mirrorOptions = Object.assign({}, {
+    mirrorOptions: {
+      'mirror': 'https://artifactory.it.keysight.com/artifactory/generic-local-ansible/boxer/electron/',
+    }
+  })
+} else {
+  // Will download from default electron url
+  mirrorOptions = {};
+}
+
 // downloads if not cached
-downloadArtifact({
+downloadArtifact(Object.assign({}, mirrorOptions, {
   version,
   artifactName: 'electron',
   force: process.env.force_no_cache === 'true',
   cacheRoot: process.env.electron_config_cache,
   platform: process.env.npm_config_platform || process.platform,
   arch: process.env.npm_config_arch || process.arch
-}).then((zipPath) => extractFile(zipPath)).catch((err) => onerror(err))
+})).then((zipPath) => extractFile(zipPath)).catch((err) => onerror(err))
 
 // unzips and makes path.txt point at the correct executable
 function extractFile (zipPath) {

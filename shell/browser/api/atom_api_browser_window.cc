@@ -295,6 +295,10 @@ void BrowserWindow::OnWindowLeaveFullScreen() {
 #endif
 }
 
+void BrowserWindow::SetWindowsShutdownBlockReason(const std::string& reason) {
+  TopLevelWindow::SetWindowsShutdownBlockReason(reason);
+}
+
 void BrowserWindow::Focus() {
   if (api_web_contents_->IsOffScreen())
     FocusOnWebView();

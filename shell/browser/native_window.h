@@ -240,7 +240,10 @@ class NativeWindow : public base::SupportsUserData,
   void NotifyWindowRequestPreferredWith(int* width);
   void NotifyWindowCloseButtonClicked();
   void NotifyWindowClosed();
-  void NotifyWindowEndSession();
+  bool NotifyWindowQueryEndSession(bool isCritical,
+                                   std::string* shutdownBlockReason);
+  void NotifyWindowEndSession(bool isCritical,
+                              bool terminationAfterMessageProcessed);
   void NotifyWindowBlur();
   void NotifyWindowFocus();
   void NotifyWindowShow();
